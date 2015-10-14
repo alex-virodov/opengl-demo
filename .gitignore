@@ -3,3 +3,5 @@
 /*.opensdf
 /*.sdf
 /*.suo
+/bin
+/tmp
