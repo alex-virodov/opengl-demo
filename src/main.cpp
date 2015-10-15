@@ -1,6 +1,7 @@
 // std headers
 #include <iostream>
 #include <memory>
+#include <list>
 
 // local headers
 #include "GLEW/glew.h"
@@ -8,6 +9,7 @@
 #include "exception.h"
 #include "irange.h"
 #include "gltexture.h"
+#include "particle_generator.h"
 
 // libraries
 #pragma comment(lib, "opengl32.lib")
@@ -98,6 +100,8 @@ void draw_marble_table(const GLTexture& marble)
 extern "C" const unsigned short image_marble_rgb565[];
 
 
+
+
 int main()
 {
     cout << "begin" << endl;
@@ -108,7 +112,7 @@ int main()
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "hello", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "hello", NULL, NULL);
     
     check_state_msg(window != NULL, "window creation failed");
 
@@ -126,6 +130,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     GLTexture marble = GLTexture(894, 894, (void*)image_marble_rgb565, GLTexture::Format::RGB565);
+
+    ParticleGenerator generator;
 
     glfwSetTime(0.0);
 
@@ -147,8 +153,13 @@ int main()
             /*up    =*/0.0f, 1.0f, 0.0f);
 
 
+        glTranslatef(0.0f,-0.1f,0.0f);
         draw_grid();
+        glTranslatef(0.0f,+0.1f,0.0f);
+
         draw_marble_table(marble);
+        generator.draw();
+        generator.advance(0.01);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

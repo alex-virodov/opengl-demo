@@ -14,11 +14,13 @@
     <ClCompile Include="src\gltexture.cpp" />
     <ClCompile Include="src\image_marble_rgb565.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\particle_generator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\exception.h" />
     <ClInclude Include="src\gltexture.h" />
     <ClInclude Include="src\irange.h" />
+    <ClInclude Include="src\particle_generator.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{03B30B96-83E5-417A-868F-1706576889A2}</ProjectGuid>
