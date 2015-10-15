@@ -137,13 +137,13 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-    	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	    glLoadIdentity();
 	    // glTranslatef(0.0f,-1.0f,-12.0f);
 
         const double camera_dist  = 10.0f;
-        const double camera_angle = glfwGetTime() / 2.0;
+        const double camera_angle = glfwGetTime() / 5.0;
 
         gluLookAt(
             /*eyex=*/camera_dist*sin(camera_angle), 
@@ -157,8 +157,39 @@ int main()
         draw_grid();
         glTranslatef(0.0f,+0.1f,0.0f);
 
+        glEnable(GL_STENCIL_TEST);
+
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0xFF);
+
         draw_marble_table(marble);
+
+        float mtx_invy[16] = {
+            1.0f,   0.0f,   0.0f,   0.0f,
+            0.0f,  -1.0f,   0.0f,   0.0f,
+            0.0f,   0.0f,   1.0f,   0.0f,
+            0.0f,   0.0f,   0.0f,   1.0f,
+        };
+
+
+        glStencilFunc(GL_EQUAL, 1, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glStencilMask(0xFF);
+
+        // draw the "reflection" (since we know camera motion, it is easy)
+        glDisable(GL_DEPTH_TEST);
+        glMultMatrixf(mtx_invy);
+        generator.draw(/*alpha_offset=*/1.0f);
+        glMultMatrixf(mtx_invy);
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_STENCIL_TEST);
+
+
+        // draw the original
         generator.draw();
+        
+        
         generator.advance(0.01);
 
         glfwSwapBuffers(window);

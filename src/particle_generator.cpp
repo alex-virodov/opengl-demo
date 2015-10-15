@@ -6,7 +6,7 @@
 // - rate control
 // - make constants not hardcoded
 
-void ParticleGenerator::draw()
+void ParticleGenerator::draw(float alpha_offset)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
@@ -15,7 +15,7 @@ void ParticleGenerator::draw()
     glBegin(GL_POINTS);
     for (const Particle& p : particles)
     {
-        glColor4f(1.0f, p.brightness*0.5f, 0.0f, p.brightness * 2.0f);
+        glColor4f(1.0f, p.brightness*0.5f, 0.0f, p.brightness * 2.0f - alpha_offset);
         glVertex3f(p.x, p.y, p.z);
     }
 

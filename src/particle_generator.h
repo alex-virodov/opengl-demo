@@ -22,7 +22,7 @@ private:
 
 public:
 
-    void draw();
+    void draw(float alpha_offset = 0.0f);
     void advance(float dt);
 
     static float frand();
