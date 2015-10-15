@@ -11,11 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\gltexture.cpp" />
     <ClCompile Include="src\image_marble_rgb565.c" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\exception.h" />
+    <ClInclude Include="src\gltexture.h" />
     <ClInclude Include="src\irange.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

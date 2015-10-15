@@ -7,6 +7,7 @@
 #include "GLFW/glfw3.h"
 #include "exception.h"
 #include "irange.h"
+#include "gltexture.h"
 
 // libraries
 #pragma comment(lib, "opengl32.lib")
@@ -19,47 +20,6 @@ using uptr = std::unique_ptr<T>;
 
 template <class T>
 uptr<T> make_uptr(T*&& ptr) { return uptr<T>(ptr); }
-
-
-class GLTexture
-{
-public:
-    enum class Format
-    {
-        RGB565,
-        // todo: others
-    };
-
-    GLTexture(unsigned int width, unsigned int height, void* data, Format format)
-    {
-        check_argument(width  > 0);
-        check_argument(height > 0);
-        check_argument(data != NULL);
-
-        glGenTextures(1, &handle);
-        bind();
-
-        check_assert(format == Format::RGB565);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data);
-
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    }
-
-    ~GLTexture()
-    {
-        glDeleteTextures(1, &handle);
-    }
-
-    void bind() const
-    {
-        glBindTexture(GL_TEXTURE_2D, handle);
-    }
-
-private:
-    GLuint handle;
-};
 
 
 

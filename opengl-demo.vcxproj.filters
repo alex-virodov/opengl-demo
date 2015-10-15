@@ -21,13 +21,19 @@
     <ClCompile Include="src\image_marble_rgb565.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gltexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\gltexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\exception.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\irange.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
