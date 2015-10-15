@@ -2,13 +2,8 @@
 #include <iostream>
 #include <memory>
 
-// windows/gl headers
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <gl/GL.h>
-#include <gl/GLU.h>
-
 // local headers
+#include "GLEW/glew.h"
 #include "GLFW/glfw3.h"
 #include "exception.h"
 #include "irange.h"
@@ -25,6 +20,46 @@ using uptr = std::unique_ptr<T>;
 template <class T>
 uptr<T> make_uptr(T*&& ptr) { return uptr<T>(ptr); }
 
+
+class GLTexture
+{
+public:
+    enum class Format
+    {
+        RGB565,
+        // todo: others
+    };
+
+    GLTexture(unsigned int width, unsigned int height, void* data, Format format)
+    {
+        check_argument(width  > 0);
+        check_argument(height > 0);
+        check_argument(data != NULL);
+
+        glGenTextures(1, &handle);
+        bind();
+
+        check_assert(format == Format::RGB565);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, data);
+
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    }
+
+    ~GLTexture()
+    {
+        glDeleteTextures(1, &handle);
+    }
+
+    void bind() const
+    {
+        glBindTexture(GL_TEXTURE_2D, handle);
+    }
+
+private:
+    GLuint handle;
+};
 
 
 
@@ -53,7 +88,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glLoadIdentity();
 }
 
-void drawGrid()
+void draw_grid()
 {
     static const float size = 10;
     
@@ -70,30 +105,37 @@ void drawGrid()
     glEnd();
 }
 
-void drawTriangleSquare()
+void draw_marble_table(const GLTexture& marble)
 {
-        glTranslatef(-1.5f,0.0f,0.0f);						// Move Left 1.5 Units And Into The Screen 6.0
-//	    glRotatef(rtri,0.0f,1.0f,0.0f);						// Rotate The Triangle On The Y axis ( NEW )
-	    glBegin(GL_TRIANGLES);								// Start Drawing A Triangle
-		    glColor3f(1.0f,0.0f,0.0f);						// Set Top Point Of Triangle To Red
-		    glVertex3f( 0.0f, 1.0f, 0.0f);					// First Point Of The Triangle
-		    glColor3f(0.0f,1.0f,0.0f);						// Set Left Point Of Triangle To Green
-		    glVertex3f(-1.0f,-1.0f, 0.0f);					// Second Point Of The Triangle
-		    glColor3f(0.0f,0.0f,1.0f);						// Set Right Point Of Triangle To Blue
-		    glVertex3f( 1.0f,-1.0f, 0.0f);					// Third Point Of The Triangle
-	    glEnd();											// Done Drawing The Triangle
-	    glTranslatef(3.0f,0.0f,0.0f);						// Move Right 1.5 Units And Into The Screen 6.0
-//	    glRotatef(rquad,1.0f,0.0f,0.0f);					// Rotate The Quad On The X axis ( NEW )
-	    glColor3f(0.5f,0.5f,1.0f);							// Set The Color To Blue One Time Only
-	    glBegin(GL_QUADS);									// Draw A Quad
-		    glVertex3f(-1.0f, 1.0f, 0.0f);					// Top Left
-		    glVertex3f( 1.0f, 1.0f, 0.0f);					// Top Right
-		    glVertex3f( 1.0f,-1.0f, 0.0f);					// Bottom Right
-		    glVertex3f(-1.0f,-1.0f, 0.0f);					// Bottom Left
-	    glEnd();											// Done Drawing The Quad
+    glPushAttrib(GL_ENABLE_BIT);
+    glEnable(GL_TEXTURE_2D);
+    marble.bind();
 
+    glColor3f(1.0, 1.0, 1.0);
+
+    glBegin(GL_TRIANGLE_FAN);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+
+    const int   sides  = 64;
+    const float radius = 3.0f;
+
+    for (int i : irange(sides+1))
+    {
+        double theta = (2*3.14/double(sides)) * i;
+
+        glTexCoord2d(0.5 + sin(theta)/2.0, 0.5 + cos(theta)/2.0);
+        glVertex3d(radius * sin(theta), 0.0, radius * cos(theta));
+    }
+    
+    glEnd();
+
+    glPopAttrib();
 }
 
+// This is simpler than implementing reading, and more self-contained.
+// Could do resources, but overhead is same, and this is simpler still.
+extern "C" const unsigned short image_marble_rgb565[];
 
 
 int main()
@@ -102,8 +144,9 @@ int main()
     
     check_state_msg(glfwInit(), "GL init failed");
 
-    glfwWindowHint(GLFW_RESIZABLE, FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, 0);
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     GLFWwindow* window = glfwCreateWindow(640, 480, "hello", NULL, NULL);
     
@@ -122,16 +165,30 @@ int main()
 	glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
 
+    GLTexture marble = GLTexture(894, 894, (void*)image_marble_rgb565, GLTexture::Format::RGB565);
+
+    glfwSetTime(0.0);
 
     while (!glfwWindowShouldClose(window))
     {
     	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	    glLoadIdentity();
-	    glTranslatef(0.0f,-1.0f,-12.0f);
-        drawGrid();
+	    // glTranslatef(0.0f,-1.0f,-12.0f);
 
-        drawTriangleSquare();
+        const double camera_dist  = 10.0f;
+        const double camera_angle = glfwGetTime() / 2.0;
+
+        gluLookAt(
+            /*eyex=*/camera_dist*sin(camera_angle), 
+            /*eyey=*/3.0f, 
+            /*eyez=*/camera_dist*cos(camera_angle), 
+            /*center=*/0.0f, 1.0f, 0.0f, 
+            /*up    =*/0.0f, 1.0f, 0.0f);
+
+
+        draw_grid();
+        draw_marble_table(marble);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
